@@ -44,6 +44,7 @@ Ton je topao i profesionalan, s naglaskom na autentičnost, prirodu, more i medi
 - FAQ kao `<details>/<summary>` (3–5 pitanja).
 - SEO: prirodno uključi ključne riječi (HR: apartmani Baška, odmor Baška Krk, privatni smještaj Baška; EN: apartments Baška, accommodation Krk island; DE: Ferienwohnungen Baška, Unterkunft Insel Krk; IT: appartamenti Baška, alloggio isola di Krk).
 - Na kraju: JSON-LD `Apartment` + `FAQPage` prema `.claude/references/jsonld-template.md` (jednom, na EN, jer je zajednički za stranicu).
+- Brojke u JSON-LD-u preuzmi točno kako ih splendido.hr prikazuje u zaglavlju oglasa (Gosti / kreveti / kupaonice / spavaće sobe / m²): `numberOfRooms` i `numberOfBedrooms` = broj spavaćih soba, `numberOfBathroomsTotal` = broj kupaonica. Ne računaj dnevni boravak ni ostale prostorije.
 
 ### Airbnb
 - Običan tekst bez HTML-a, najviše oko 500 riječi, razgovorni stil.
