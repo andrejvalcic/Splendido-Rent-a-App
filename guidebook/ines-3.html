@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ines 3 – Guidebook</title>
+<style>
+  :root { --bg:#0f2233; --card:#17344c; --acc:#e8c36a; --txt:#f4f7fa; --mut:#a9bccb; --fs:16px; }
+  * { box-sizing:border-box; }
+  html { font-size:var(--fs); }
+  body { margin:0; background:var(--bg); color:var(--txt); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; min-height:100vh; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 1.25rem; flex-wrap:wrap; }
+  h1 { margin:0; font-size:1.5rem; }
+  h1 small { display:block; font-size:.85rem; font-weight:400; color:var(--mut); }
+  .langs button { background:none; border:1px solid var(--mut); color:var(--txt); padding:.35rem .7rem; border-radius:.5rem; font-size:.9rem; cursor:pointer; }
+  .langs button[aria-pressed="true"] { background:var(--acc); color:#1a1a1a; border-color:var(--acc); }
+  main { padding:0 1.25rem 2rem; max-width:1200px; margin:0 auto; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:.9rem; }
+  .tile { background:var(--card); border:3px solid transparent; border-radius:1rem; padding:1.2rem .8rem; text-align:center; color:var(--txt); font:inherit; cursor:pointer; }
+  .tile .ic { display:block; font-size:2.2rem; margin-bottom:.4rem; }
+  .tile span.t { font-weight:600; }
+  .tile:focus, .back:focus, .copy:focus, .langs button:focus { outline:none; border-color:var(--acc); box-shadow:0 0 0 4px rgba(232,195,106,.35); }
+  .panel { background:var(--card); border-radius:1rem; padding:1.25rem; }
+  .panel h2 { margin-top:0; }
+  .panel ul { padding-left:1.2rem; line-height:1.6; }
+  .row { display:flex; justify-content:space-between; gap:1rem; padding:.55rem 0; border-bottom:1px solid rgba(255,255,255,.1); }
+  .row:last-child { border:0; }
+  .row b { color:var(--acc); white-space:nowrap; }
+  .back, .copy { background:var(--acc); color:#1a1a1a; border:3px solid transparent; border-radius:.6rem; padding:.55rem 1rem; font:inherit; font-weight:600; cursor:pointer; margin-bottom:1rem; }
+  .copy { margin:.6rem 0 0; }
+  .todo { color:#ff9a8b; }
+  [hidden] { display:none !important; }
+  /* TV: veći tekst i veće pločice (širok ekran ili ?tv=1) */
+  body.tv { --fs:26px; }
+  body.tv .grid { grid-template-columns:repeat(4,1fr); }
+  @media (min-width:1280px) { body { --fs:24px; } .grid { grid-template-columns:repeat(4,1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title"></h1>
+  <div class="langs" id="langs"></div>
+</header>
+<main>
+  <div id="home" class="grid"></div>
+  <div id="detail" hidden></div>
+</main>
+
+<script>
+/* ---------- PODACI (kopiraj datoteku za novi apartman i izmijeni samo ovaj dio) ----------
+   Izvor: apartmani/ines-3.md. Polja označena "[UNESI]" treba popuniti prije objave. */
+const DATA = {
+  name: "Ines 3",
+  address: "Gruh 2B, 51523 Baška",
+  wifi: { ssid: "[UNESI]", pass: "[UNESI]" },
+  doorCode: "[UNESI]",
+  host: { phone: "[UNESI]", email: "[UNESI]" },
+  emergency: "112",
+  sections: ["checkin","wifi","rules","flat","nearby","contact"],
+  icons: { checkin:"🔑", wifi:"📶", rules:"📋", flat:"🏠", nearby:"📍", contact:"☎️" }
+};
+
+const I18N = {
+  hr: { sub:"Vaš digitalni vodič", back:"← Natrag",
+    checkin:"Prijava i odjava", wifi:"WiFi", rules:"Kućna pravila", flat:"Apartman", nearby:"U blizini", contact:"Kontakt i hitno",
+    in:"Prijava", out:"Odjava", inV:"15:00–19:00", outV:"do 10:00",
+    late:"Kasna prijava nakon 21:00 uz naknadu 30 EUR, najkasnije do 00:00.", code:"Šifra ulaza", addr:"Adresa",
+    net:"Mreža", pass:"Lozinka", copy:"Kopiraj lozinku", copied:"Kopirano ✓",
+    rulesL:["Pušenje je zabranjeno u objektu (dopušteno vani).","Zabave i događaji nisu dopušteni.","Noćni mir: 23:00–09:00 i 14:00–17:00.","Kućni ljubimci: 1 ljubimac, na upit, 20 EUR/noć.","Ručnici i posteljina mijenjaju se tjedno."],
+    flatL:["Klima uređaj","WiFi","Kabelska/satelitska TV","Balkon (pogled na grad)","Besplatan privatni parking (1 mjesto)","Kuhinja: štednjak, hladnjak, zamrzivač, kuhalo za vodu, pribor","Kupaonica s tušem i bideom","Pribor za prvu pomoć"],
+    nearL:[["Restoran","50 m"],["Ljekarna","200 m"],["Plaža","150 m"]],
+    call:"Domaćin", mail:"E-mail", emg:"Hitna služba (EU)" },
+  en: { sub:"Your digital guide", back:"← Back",
+    checkin:"Check-in & check-out", wifi:"WiFi", rules:"House rules", flat:"The apartment", nearby:"Nearby", contact:"Contact & emergency",
+    in:"Check-in", out:"Check-out", inV:"3:00–7:00 pm", outV:"by 10:00 am",
+    late:"Late check-in after 9:00 pm costs 30 EUR, until midnight at the latest.", code:"Door code", addr:"Address",
+    net:"Network", pass:"Password", copy:"Copy password", copied:"Copied ✓",
+    rulesL:["No smoking inside (allowed outside).","No parties or events.","Quiet hours: 11 pm–9 am and 2–5 pm.","Pets: 1 pet, on request, 20 EUR/night.","Towels and linen are changed weekly."],
+    flatL:["Air conditioning","WiFi","Cable/satellite TV","Balcony (city view)","Free private parking (1 space)","Kitchen: stove, fridge, freezer, kettle, utensils","Bathroom with shower and bidet","First-aid kit"],
+    nearL:[["Restaurant","50 m"],["Pharmacy","200 m"],["Beach","150 m"]],
+    call:"Host", mail:"Email", emg:"Emergency (EU)" },
+  de: { sub:"Ihr digitaler Reiseführer", back:"← Zurück",
+    checkin:"Check-in & Check-out", wifi:"WLAN", rules:"Hausordnung", flat:"Die Unterkunft", nearby:"In der Nähe", contact:"Kontakt & Notfall",
+    in:"Check-in", out:"Check-out", inV:"15:00–19:00 Uhr", outV:"bis 10:00 Uhr",
+    late:"Später Check-in nach 21:00 Uhr kostet 30 EUR, spätestens bis 24:00 Uhr.", code:"Türcode", addr:"Adresse",
+    net:"Netzwerk", pass:"Passwort", copy:"Passwort kopieren", copied:"Kopiert ✓",
+    rulesL:["Rauchen im Gebäude verboten (draußen erlaubt).","Keine Partys oder Veranstaltungen.","Ruhezeiten: 23–9 Uhr und 14–17 Uhr.","Haustiere: 1 Tier, auf Anfrage, 20 EUR/Nacht.","Handtücher und Bettwäsche werden wöchentlich gewechselt."],
+    flatL:["Klimaanlage","WLAN","Kabel-/Satelliten-TV","Balkon (Stadtblick)","Kostenloser Privatparkplatz (1 Stellplatz)","Küche: Herd, Kühlschrank, Gefrierfach, Wasserkocher, Geschirr","Bad mit Dusche und Bidet","Erste-Hilfe-Set"],
+    nearL:[["Restaurant","50 m"],["Apotheke","200 m"],["Strand","150 m"]],
+    call:"Gastgeber", mail:"E-Mail", emg:"Notruf (EU)" },
+  it: { sub:"La tua guida digitale", back:"← Indietro",
+    checkin:"Check-in e check-out", wifi:"WiFi", rules:"Regole della casa", flat:"L'appartamento", nearby:"Nelle vicinanze", contact:"Contatti ed emergenze",
+    in:"Check-in", out:"Check-out", inV:"15:00–19:00", outV:"entro le 10:00",
+    late:"Check-in tardivo dopo le 21:00 con supplemento di 30 EUR, al più tardi entro mezzanotte.", code:"Codice porta", addr:"Indirizzo",
+    net:"Rete", pass:"Password", copy:"Copia password", copied:"Copiato ✓",
+    rulesL:["Vietato fumare all'interno (consentito all'esterno).","Niente feste o eventi.","Silenzio: 23:00–09:00 e 14:00–17:00.","Animali: 1 animale, su richiesta, 20 EUR/notte.","Asciugamani e biancheria cambiati ogni settimana."],
+    flatL:["Aria condizionata","WiFi","TV via cavo/satellite","Balcone (vista sulla città)","Parcheggio privato gratuito (1 posto)","Cucina: fornello, frigorifero, congelatore, bollitore, utensili","Bagno con doccia e bidet","Kit di pronto soccorso"],
+    nearL:[["Ristorante","50 m"],["Farmacia","200 m"],["Spiaggia","150 m"]],
+    call:"Host", mail:"E-mail", emg:"Emergenza (UE)" }
+};
+
+const $ = id => document.getElementById(id);
+let lang = (()=>{ try { return localStorage.getItem("gb-lang"); } catch(e){ return null; } })()
+  || (navigator.language||"hr").slice(0,2);
+if (!I18N[lang]) lang = "en";
+let current = null;
+
+const val = v => v.startsWith("[") ? `<span class="todo">${v}</span>` : v;
+const ul = a => "<ul>" + a.map(x=>`<li>${x}</li>`).join("") + "</ul>";
+const row = (k,v) => `<div class="row"><span>${k}</span><b>${v}</b></div>`;
+
+function body(id, t) {
+  switch (id) {
+    case "checkin": return row(t.in,t.inV)+row(t.out,t.outV)+row(t.addr,DATA.address)+row(t.code,val(DATA.doorCode))+`<p>${t.late}</p>`;
+    case "wifi":    return row(t.net,val(DATA.wifi.ssid))+row(t.pass,val(DATA.wifi.pass))+`<button class="copy" id="copy">${t.copy}</button>`;
+    case "rules":   return ul(t.rulesL);
+    case "flat":    return ul(t.flatL);
+    case "nearby":  return t.nearL.map(([k,v])=>row(k,v)).join("");
+    case "contact": return row(t.call,val(DATA.host.phone))+row(t.mail,val(DATA.host.email))+row(t.emg,DATA.emergency);
+  }
+}
+
+function render() {
+  const t = I18N[lang];
+  document.documentElement.lang = lang;
+  $("title").innerHTML = `${DATA.name}<small>${t.sub}</small>`;
+  $("langs").innerHTML = Object.keys(I18N).map(l=>`<button data-l="${l}" aria-pressed="${l===lang}">${l.toUpperCase()}</button>`).join(" ");
+  $("home").innerHTML = DATA.sections.map(s=>`<button class="tile" data-s="${s}"><span class="ic">${DATA.icons[s]}</span><span class="t">${t[s]}</span></button>`).join("");
+  if (current) open(current); else show(null);
+}
+
+function show(id) {
+  current = id;
+  $("home").hidden = !!id; $("detail").hidden = !id;
+  const first = id ? $("detail").querySelector(".back") : $("home").querySelector(".tile");
+  if (first) first.focus();
+}
+
+function open(id) {
+  const t = I18N[lang];
+  $("detail").innerHTML = `<button class="back">${t.back}</button><div class="panel"><h2>${DATA.icons[id]} ${t[id]}</h2>${body(id,t)}</div>`;
+  show(id);
+  const c = $("copy");
+  if (c) c.onclick = () => { try { navigator.clipboard.writeText(DATA.wifi.pass); } catch(e){} c.textContent = t.copied; };
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.l) { lang = b.dataset.l; try { localStorage.setItem("gb-lang", lang); } catch(e){} render(); }
+  else if (b.dataset.s) open(b.dataset.s);
+  else if (b.classList.contains("back")) show(null);
+});
+
+/* Daljinski (D-pad): strelice pomiču fokus među pločicama/gumbima, Enter bira, Esc/Backspace = natrag */
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" || e.key === "Backspace" || e.key === "BrowserBack" || e.keyCode === 10009 /* Tizen */ || e.keyCode === 461 /* webOS */) {
+    if (current) { e.preventDefault(); show(null); } return;
+  }
+  const dir = { ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,-1], ArrowDown:[0,1] }[e.key];
+  if (!dir) return;
+  e.preventDefault();
+  const items = [...document.querySelectorAll("button:not([hidden])")].filter(b => b.offsetParent);
+  const cur = document.activeElement, cr = cur && cur.getBoundingClientRect();
+  if (!cr || !items.includes(cur)) { items[0] && items[0].focus(); return; }
+  let best = null, bestScore = Infinity;
+  for (const b of items) {
+    if (b === cur) continue;
+    const r = b.getBoundingClientRect();
+    const dx = (r.left+r.width/2) - (cr.left+cr.width/2), dy = (r.top+r.height/2) - (cr.top+cr.height/2);
+    const along = dx*dir[0] + dy*dir[1];
+    if (along <= 0) continue;
+    const score = along + 2*Math.abs(dir[0] ? dy : dx);
+    if (score < bestScore) { bestScore = score; best = b; }
+  }
+  if (best) best.focus();
+});
+
+if (/[?&]tv=1/.test(location.search)) document.body.classList.add("tv");
+render();
+</script>
+</body>
+</html>
